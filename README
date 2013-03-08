@@ -1,0 +1,17 @@
+Morse encoder and decoder.
+
+Usage:
+
+    morse < text.txt > morse.txt
+    morse -r < morse.txt > text.txt
+
+This was made so that I could read Caliope's messages in the Homestuck webcomic
+when she communicates with Roxy through Morse code:
+
+http://www.mspaintadventures.com/?s=6&p=007493
+
+A personal challenge was to encode each Morse code with only 8 bits. I did this
+by encoding dots as set bits and dashes as unset bits, and indicated the length
+of the code by a terminating set bit followed by zeros - ie. the length of the
+code is the index of the last set bit. This leaves room for a maximum of 7 dots
+and dashes.
