@@ -5,7 +5,7 @@ Usage:
     morse < text.txt > morse.txt
     morse -r < morse.txt > text.txt
 
-This was made so that I could read Caliope's messages in the Homestuck webcomic
+This was made so that I could read Calliope's messages in the Homestuck webcomic
 when she communicates with Roxy through Morse code:
 
 http://www.mspaintadventures.com/?s=6&p=007493

@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
+#include "getline.h"
 
 uint8_t codelen(uint8_t s);
 uint8_t shortnote(uint8_t s);
@@ -96,7 +97,7 @@ void decode(void)
 	uint8_t s = 0x80;
 	char c;
 
-	while((len = getline(&line, &linecap, stdin)) > 0) {
+	while((len = int_getline(&line, &linecap, stdin)) > 0) {
 		s = 0x80;
 		for(i = 0; i < len; i++) {
 			c = line[i];
@@ -135,7 +136,7 @@ void encode(void)
 	int i, j;
 	uint8_t c;
 
-	while((len = getline(&line, &linelen, stdin)) > 0) {
+	while((len = int_getline(&line, &linelen, stdin)) > 0) {
 		for(i = 0; i < len; i++) {
 			c = line[i];
 			if(c >= 'A' && c <= 'Z')
