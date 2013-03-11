@@ -1,16 +1,19 @@
 #include "getline.h"
+#include <stdlib.h>
 
-ssize_t int_getline(char **buf, size_t *n, FILE *fp)
+ssize_t int_getline(char **bufp, size_t *n, FILE *fp)
 {
 	ssize_t len;
 	size_t cap;
 	int c;
+	char *buf;
 
 	if(feof(fp))
 		return -1;
 
 	len = 0;
-	if(*buf != NULL)
+	buf = *bufp;
+	if(buf != NULL)
 		cap = *n;
 	else
 		cap = 0;
@@ -24,9 +27,9 @@ ssize_t int_getline(char **buf, size_t *n, FILE *fp)
 				cap = 256;
 			else
 				cap *= 2;
-			*buf = realloc(*buf, cap);
+			buf = (char *)realloc(buf, cap);
 		}
-		(*buf)[len++] = c;
+		buf[len++] = c;
 		if(c == '\n')
 			break;
 	}
@@ -35,11 +38,12 @@ ssize_t int_getline(char **buf, size_t *n, FILE *fp)
 			cap = 256;
 		else
 			cap *= 2;
-		*buf = realloc(*buf, cap);
+		buf = realloc(buf, cap);
 	}
-	(*buf)[len] = '\0';
+	buf[len] = '\0';
 
 	*n = cap;
+	*bufp = buf;
 
 	return len;
 }
