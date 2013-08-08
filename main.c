@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <assert.h>
+#include <getopt.h>
 #include "getline.h"
 
 uint8_t codelen(uint8_t s);
@@ -11,6 +12,12 @@ void decode(void);
 void encode(void);
 void printcode(uint8_t c);
 void usage(FILE *out);
+
+int reverse = 0;
+char *infile = NULL;
+FILE *in = NULL;
+char *outfile = NULL;
+FILE *out = NULL;
 
 unsigned char morse[] = {
 	[0xa0] = 'a', // 1010 0000
@@ -97,7 +104,7 @@ void decode(void)
 	uint8_t s = 0x80;
 	char c;
 
-	while((len = int_getline(&line, &linecap, stdin)) > 0) {
+	while((len = int_getline(&line, &linecap, in)) > 0) {
 		s = 0x80;
 		for(i = 0; i < len; i++) {
 			c = line[i];
@@ -109,20 +116,20 @@ void decode(void)
 				s = longnote(s);
 				break;
 			case '/':
-				fputc(' ', stdout);
+				fputc(' ', out);
 				break;
 			default:
 				if(s != 0x80) {
 					if(morse[s])
-						fputc(morse[s], stdout);
+						fputc(morse[s], out);
 					else
-						fputc('?', stdout);
+						fputc('?', out);
 				}
 				s = 0x80;
 				break;
 			}
 		}
-		puts("");
+		fputc('\n', out);
 	}
 
 	free(line);
@@ -136,14 +143,14 @@ void encode(void)
 	int i, j;
 	uint8_t c;
 
-	while((len = int_getline(&line, &linelen, stdin)) > 0) {
+	while((len = int_getline(&line, &linelen, in)) > 0) {
 		for(i = 0; i < len; i++) {
 			c = line[i];
 			if(c >= 'A' && c <= 'Z')
 				c -= 'A' - 'a';
 			switch(line[i]) {
 			case ' ':
-				printf("/ ");
+				fprintf(out, "/ ");
 				break;
 			default:
 				for(j = 0; j < sizeof(morse); j++)
@@ -154,7 +161,7 @@ void encode(void)
 			}
 		}
 
-		fputc('\n', stdout);
+		fputc('\n', out);
 	}
 
 	free(line);
@@ -168,26 +175,81 @@ void printcode(uint8_t c)
 	len = codelen(c);
 	for(i = 0; i < len; i++) {
 		if(0x80 & (c << i))
-			fputc('.', stdout);
+			fputc('.', out);
 		else
-			fputc('-', stdout);
+			fputc('-', out);
 	}
-	fputc(' ', stdout);
+	fputc(' ', out);
 }
 
 void usage(FILE *out)
 {
-	fprintf(out, "Usage: morse [-r]\n");
+	fprintf(out, "usage: morse [-r]\n");
+}
+
+void parseargs(int argc, char *argv[])
+{
+	int c;
+	static struct option longopts[] = {
+		{ "help", no_argument, NULL, 'h' },
+		{ "reverse", no_argument, NULL, 'r' },
+		{ "out", required_argument, NULL, 'o' },
+		{ 0, 0, 0, 0 },
+	};
+
+	while((c = getopt_long(argc, argv, "hro:", longopts, NULL)) != -1)
+	switch(c) {
+	case 'o':
+		outfile = optarg;
+		break;
+	case 'r':
+		reverse = 1;
+		break;
+	case 'h':
+		usage(stdout);
+		exit(EXIT_SUCCESS);
+	case '?':
+		usage(stderr);
+		exit(EXIT_FAILURE);
+	}
+
+	switch(argc - optind) {
+	case 0:
+		break;
+	case 1:
+		infile = argv[optind];
+		break;
+	default:
+		usage(stderr);
+		exit(EXIT_FAILURE);
+	}
+}
+
+void openfiles(void)
+{
+	if(infile != NULL) {
+		in = fopen(infile, "r");
+		if(in == NULL)
+			perror("fopen");
+	} else
+		in = stdin;
+
+	if(outfile != NULL) {
+		out = fopen(outfile, "w");
+		if(out == NULL)
+			perror("fopen");
+	} else
+		out = stdout;
 }
 
 int main(int argc, char *argv[])
 {
-	if(argc == 2 && strcmp("-r", argv[1]) == 0)
+	parseargs(argc, argv);
+	openfiles();
+	if(reverse)
 		decode();
-	else if(argc <= 1)
-		encode();
 	else
-		usage(stderr);
+		encode();
 
 	exit(EXIT_SUCCESS);
 }
